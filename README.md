@@ -1,1 +1,1 @@
-# zapret-configs
+# zapret-checker
