@@ -1,0 +1,14 @@
+127.0.0.1 localhost
+::1     localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+157.240.205.35 Lfacebook.com www.facebook.com
+157.240.205.35 m.facebook.com
+157.240.9.174 instagram.com www.instagram.com
+31.13.72.53 scontent-arn2-1.cdninstagram.com scontent.cdninstagram.com static.cdninstagram.com
+157.240.225.174 instagram.com www.instagram.com i.instagram.com
+157.240.22.2 dgw.c10r.facebook.com
+157.240.22.63 instagram.c10r.facebook.com
+157.240.22.2 gateway.instagram.com
+157.240.22.63 edge-chat.instagram.com
