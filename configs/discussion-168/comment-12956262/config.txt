@@ -1,0 +1,26 @@
+NFQWS_PORTS_TCP=80,443
+NFQWS_PORTS_UDP=443,50000-50099
+
+--filter-tcp=80 <HOSTLIST>
+--methodeol
+--new
+--filter-tcp=443 <HOSTLIST>
+--dpi-desync=fake,multidisorder
+--dpi-desync-fooling=badseq
+--dpi-desync-split-pos=1,midsld
+--new
+--filter-tcp=443
+--hostlist=/opt/zapret/ipset/zapret-hosts-google.txt
+--dpi-desync=fake
+--dpi-desync-fooling=badsum
+--dpi-desync-fake-tls-mod=rnd,dupsid,rndsni,padencap
+--new
+--filter-udp=443
+--hostlist=/opt/zapret/ipset/zapret-hosts-google.txt
+--dpi-desync=fake
+--dpi-desync-fooling=md5sig
+--dpi-desync-fake-tls-mod=rnd,dupsid,rndsni,padencap
+--new
+--filter-udp=50000-50099
+--filter-l7=discord,stun
+--dpi-desync=fake

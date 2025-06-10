@@ -1,0 +1,45 @@
+NFQWS_PORTS_TCP= 80,443
+NFQWS_PORTS_UDP= 443,50000-50099
+DISABLE_IPV6=0
+
+--filter-udp=443
+--hostlist=/opt/zapret/ipset/zapret-hosts-user.txt
+--dpi-desync=fake
+--dpi-desync-repeats=6
+--dpi-desync-fake-quic=/opt/zapret/files/fake/quic_initial_www_google_com.bin
+--new
+--filter-udp=50000-50100
+--filter-l7=discord,stun
+--dpi-desync=fake
+--new
+--filter-tcp=80 <HOSTLIST>
+--dpi-desync=fake,split2
+--dpi-desync-autottl=2
+--dpi-desync-fooling=md5sig
+--new
+--filter-tcp=443
+--hostlist=/opt/zapret/ipset/zapret-hosts-user.txt
+--dpi-desync=split
+--dpi-desync-split-pos=1
+--dpi-desync-autottl
+--dpi-desync-fooling=badseq
+--dpi-desync-repeats=6
+--new
+--filter-udp=443
+--hostlist=/opt/zapret/ipset/zapret-ip-user.txt
+--dpi-desync=fake
+--dpi-desync-repeats=6
+--dpi-desync-fake-quic=/opt/zapret/files/fake/quic_initial_www_google_com.bin
+--new
+--filter-tcp=80 <HOSTLIST>
+--dpi-desync=fake,split2
+--dpi-desync-autottl=2
+--dpi-desync-fooling=md5sig
+--new
+--filter-tcp=443
+--hostlist=/opt/zapret/ipset/zapret-ip-user.txt
+--dpi-desync=split
+--dpi-desync-split-pos=1
+--dpi-desync-autottl
+--dpi-desync-fooling=badseq
+--dpi-desync-repeats=6

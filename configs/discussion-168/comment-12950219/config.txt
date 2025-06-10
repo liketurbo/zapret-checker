@@ -1,5 +1,6 @@
 NFQWS_PORTS_TCP=80,443
 NFQWS_PORTS_UDP=443,50000-50099
+
 --filter-tcp=80
 --dpi-desync=fake,split2
 --dpi-desync-autottl=2

@@ -1,0 +1,31 @@
+--dpi-desync=fakedsplit
+--dpi-desync-ttl=4
+--dpi-desync-repeats=16
+--new
+--filter-tcp=443
+--hostlist=/opt/zapret/ipset/zapret-hosts-google.txt
+--dpi-desync=fake,multidisorder
+--dpi-desync-split-pos=1,midsld
+--dpi-desync-repeats=11
+--dpi-desync-fooling=md5sig
+--dpi-desync-fake-tls=/opt/zapret/files/fake/tls_clienthello_www_google_com.bin
+--new
+--filter-udp=443
+--hostlist=/opt/zapret/ipset/zapret-hosts-google.txt
+--dpi-desync=fake
+--dpi-desync-repeats=11
+--dpi-desync-fake-quic=/opt/zapret/files/fake/quic_initial_www_google_com.bin
+--new
+--filter-udp=443 <HOSTLIST_NOAUTO>
+--dpi-desync=fake
+--dpi-desync-repeats=16
+--new
+--filter-tcp=443 <HOSTLIST>
+--dpi-desync=fakeddisorder
+--dpi-desync-ttl=4
+--dpi-desync-repeats=16
+--dpi-desync-fake-tls-mod=padencap
+--new
+--filter-udp=50000-50099
+--filter-l7=discord,stun
+--dpi-desync=fake
