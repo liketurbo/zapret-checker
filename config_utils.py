@@ -1,7 +1,7 @@
 import os
 import shutil
+from env_config import ZAPRET_DIR
 
-ZAPRET_DIR = os.getenv('ZAPRET_DIR', './zapret-dev')
 ZAPRET_DEFAULT_CONFIG = os.path.join(ZAPRET_DIR, 'config.default')
 ZAPRET_IPSET_DIR = os.path.join(ZAPRET_DIR, 'ipset')
 
