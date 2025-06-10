@@ -1,15 +1,53 @@
 #!/usr/bin/env python3
 
 from config_utils import get_configs, update_config
-from network_checks import check_ping, check_curl, check_video_stream
+from network_checks import check_yandex_access, check_youtube_access, check_instagram_access
+from log import setup_logging
 
 
 def main():
-    configs = get_configs()
-    print(configs["0"])
-    print(check_ping("www.youtube.com"))
-    print(check_curl("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
-    print(check_video_stream("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
+    logger = setup_logging()
+
+    yandex_access = check_yandex_access()
+
+    if not yandex_access:
+        logger.warning("yandex check failed")
+        return
+
+    all_configs = get_configs()
+
+    youtube_config = None
+    instagram_config = None
+
+    for config_name in all_configs:
+        config = all_configs[config_name]
+        logger.info(f"checking config {config_name}")
+        update_config(config)
+
+        youtube_access = check_youtube_access()
+        if not youtube_access:
+            logger.warning("no youtube access")
+        else:
+            youtube_config = config
+
+        instagram_access = check_instagram_access()
+        if not instagram_access:
+            logger.warning("no instagram access")
+        else:
+            instagram_config = config
+
+        if youtube_access and instagram_access:
+            logger.info("config worked for both services")
+            break
+
+    if not youtube_config and not instagram_config:
+        logger.warning("didn't find config that works for any service")
+    if not instagram_config:
+        logger.warning("found config that only works for youtube")
+        update_config(youtube_config)
+    if not youtube_config:
+        logger.warning("found config that only works for instagram")
+        update_config(instagram_config)
 
 
 if __name__ == "__main__":

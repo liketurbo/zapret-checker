@@ -1,21 +1,15 @@
 import os
 import shutil
 
-TARGET_ZAPRET_DIR = os.getenv('ZAPRET_DIR', '/tmp/zapret')
-TARGET_ROOT_DIR = os.getenv('ROOT_DIR', '/tmp')
-TARGET_IPSET_DIR = os.path.join(TARGET_ZAPRET_DIR, 'ipset')
+ZAPRET_DIR = os.getenv('ZAPRET_DIR', './zapret-dev')
+ZAPRET_DEFAULT_CONFIG = os.path.join(ZAPRET_DIR, 'config.default')
+ZAPRET_IPSET_DIR = os.path.join(ZAPRET_DIR, 'ipset')
 
 DEFAULT_NFQWS_PORTS_TCP = "80,443"
 DEFAULT_NFQWS_PORTS_UDP = "443"
 DEFAULT_DISABLE_IPV6 = 1
 DEFAULT_WS_USER = "daemon"
 DEFAULT_FWTYPE = "nftables"
-
-DEFAULT_IPSET_FILES = {
-    './files/zapret-hosts-google.txt',
-    './files/zapret-hosts-user-exclude.txt',
-    './files/zapret-hosts-user.txt'
-}
 
 
 def parse_config(file_path):
@@ -55,36 +49,31 @@ def parse_config(file_path):
 
 
 def get_configs():
-    configs = []
+    configs = {}
     configs_dir = './configs/discussion-168'
 
     for entry in os.listdir(configs_dir):
         entry_path = os.path.join(configs_dir, entry)
 
-        if os.path.isfile(entry_path):
-            config = parse_config(entry_path)
-            config['ipset_files'] = DEFAULT_IPSET_FILES.copy()
-            configs.append(config)
-        elif os.path.isdir(entry_path):
-            config = None
-            ipset_files = DEFAULT_IPSET_FILES.copy()
+        config = None
+        ipset_files = []
 
-            for file in os.listdir(entry_path):
-                file_path = os.path.join(entry_path, file)
+        for file in os.listdir(entry_path):
+            file_path = os.path.join(entry_path, file)
 
-                if file == 'config.txt':
-                    config = parse_config(file_path)
-                else:
-                    ipset_files.add(file_path)
+            if file == 'config.txt':
+                config = parse_config(file_path)
+            else:
+                ipset_files.append(file_path)
 
-            config['ipset_files'] = ipset_files
-            configs.append(config)
+        config['ipset_files'] = ipset_files
+        configs[entry] = config
 
     return configs
 
 
 def update_config(config):
-    with open('./files/default-config.txt') as f:
+    with open(ZAPRET_DEFAULT_CONFIG) as f:
         lines = f.readlines()
 
     new_lines = []
@@ -106,14 +95,14 @@ def update_config(config):
         else:
             new_lines.append(line)
 
-    os.makedirs(TARGET_ZAPRET_DIR, exist_ok=True)
+    os.makedirs(ZAPRET_DIR, exist_ok=True)
 
-    config_path = os.path.join(TARGET_ZAPRET_DIR, 'config')
+    config_path = os.path.join(ZAPRET_DIR, 'config')
     with open(config_path, 'w') as f:
         f.writelines(new_lines)
 
-    os.makedirs(TARGET_IPSET_DIR, exist_ok=True)
+    os.makedirs(ZAPRET_IPSET_DIR, exist_ok=True)
 
     for ipset_file in config['ipset_files']:
-        dst = os.path.join(TARGET_IPSET_DIR, os.path.basename(ipset_file))
+        dst = os.path.join(ZAPRET_IPSET_DIR, os.path.basename(ipset_file))
         shutil.copy2(ipset_file, dst)
