@@ -4,6 +4,7 @@ import subprocess
 from config_utils import get_configs, update_config
 from network_checks import check_yandex_access, check_youtube_access, check_instagram_access
 from log import setup_logging
+import logging
 
 
 def restart_zapret():
@@ -20,7 +21,8 @@ def restart_zapret():
 
 
 def main():
-    logger = setup_logging()
+    setup_logging()
+    logger = logging.getLogger()
 
     yandex_access = check_yandex_access()
 

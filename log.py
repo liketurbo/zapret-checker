@@ -24,5 +24,3 @@ def setup_logging(log_file_path=None):
         )
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
-
-    return logger

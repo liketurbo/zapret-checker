@@ -1,4 +1,7 @@
 import subprocess
+import logging
+
+logger = logging.getLogger()
 
 
 def _check_ping(hostname):
@@ -12,8 +15,8 @@ def _check_ping(hostname):
 
 def _check_curl(url):
     try:
-        subprocess.run(['curl', '-s', '--max-time', '5', url],
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5, check=True)
+        subprocess.run(['curl', '-s', url],
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10, check=True)
         return True
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False
@@ -58,9 +61,23 @@ def check_yandex_access():
 
 def check_youtube_access():
     YOUTUBE_RICKROLL = "https://youtube.com/watch?v=dQw4w9WgXcQ"
-    return _check_ping("youtube.com") and _check_curl(YOUTUBE_RICKROLL) and _check_video_stream(YOUTUBE_RICKROLL)
+    ping_success = _check_ping("youtube.com")
+    if not ping_success:
+        logger.warning("youtube ping failed")
+    curl_success = _check_curl(YOUTUBE_RICKROLL)
+    if not curl_success:
+        logger.warning("youtube curl failed")
+    stream_success = _check_video_stream(YOUTUBE_RICKROLL)
+    if not stream_success:
+        logger.warning("youtube stream failed")
+    return ping_success and curl_success and stream_success
 
 
 def check_instagram_access():
-    return _check_ping("instagram.com") and _check_curl(
-        "https://instagram.com")
+    ping_success = _check_ping("instagram.com")
+    if not ping_success:
+        logger.warning("instagram ping failed")
+    curl_success = _check_curl("https://instagram.com")
+    if not curl_success:
+        logger.warning("instagram curl failed")
+    return ping_success and curl_success
