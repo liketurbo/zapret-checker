@@ -22,43 +22,45 @@ def _check_curl(url):
 def _check_video_stream(url):
     try:
         result = subprocess.run(
-            ['yt-dlp', '--get-url', '--format', 'best', url],
+            ['yt-dlp', '--get-url',  url],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=10,
             check=True
         )
-        stream_url = result.stdout.decode().strip()
+        urls = result.stdout.decode().strip().splitlines()
 
-        subprocess.run([
-            'curl',
-            '--range', '0-1',
-            '-s',
-            '-o', '/dev/null',
-            '-w', '%{http_code}',
-            stream_url
-        ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=10,
-            check=True
-        )
+        for stream_url in urls:
+            curl = subprocess.run([
+                'curl',
+                '--range', '0-1',
+                '-s',
+                '-o', '/dev/null',
+                '-w', '%{http_code}',
+                stream_url
+            ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=10,
+            )
+            if curl.stdout.decode().strip() == '206':
+                return True
 
-        return True
+        return False
 
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False
 
 
 def check_yandex_access():
-    return _check_ping("www.yandex.ru") and _check_curl("https://www.yandex.ru")
+    return _check_ping("yandex.ru") and _check_curl("https://yandex.ru")
 
 
 def check_youtube_access():
-    YOUTUBE_RICKROLL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-    return _check_ping("www.youtube.com") and _check_curl(YOUTUBE_RICKROLL) and _check_video_stream(YOUTUBE_RICKROLL)
+    YOUTUBE_RICKROLL = "https://youtube.com/watch?v=dQw4w9WgXcQ"
+    return _check_ping("youtube.com") and _check_curl(YOUTUBE_RICKROLL) and _check_video_stream(YOUTUBE_RICKROLL)
 
 
 def check_instagram_access():
-    return _check_ping("www.instagram.com") and _check_curl(
-        "https://www.instagram.com")
+    return _check_ping("instagram.com") and _check_curl(
+        "https://instagram.com")
