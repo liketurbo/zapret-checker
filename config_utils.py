@@ -50,7 +50,7 @@ def parse_config(file_path):
 
 def get_configs():
     configs = {}
-    configs_dir = './configs/discussion-168'
+    configs_dir = './files/configs/discussion-168'
 
     for entry in os.listdir(configs_dir):
         entry_path = os.path.join(configs_dir, entry)
