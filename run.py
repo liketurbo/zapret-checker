@@ -94,6 +94,7 @@ def main():
         all_configs = get_configs()
 
         config_keys = list(all_configs.keys())
+        config_keys.sort()
 
         current_config_name = None
         current_idx = 0
