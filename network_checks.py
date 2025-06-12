@@ -18,7 +18,11 @@ def _check_curl(url):
         subprocess.run(['curl', '-s', url],
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10, check=True)
         return True
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+    except subprocess.CalledProcessError as e:
+        if e.returncode == 35:  # instagram ssl doesn't work on openwrt routers
+            return True
+        return False
+    except subprocess.TimeoutExpired:
         return False
 
 

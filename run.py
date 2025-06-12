@@ -131,7 +131,7 @@ def main():
                     status_msg = ('youtube test completed',
                                   'success' if success else 'error')
                 elif current_idx == 2:
-                    status_msg = ('testing isntagram access...', 'loading')
+                    status_msg = ('testing instagram access...', 'loading')
                     display_menu(config_keys, current_idx,
                                  current_config_name, status_msg)
                     success = test_instagram_access()
