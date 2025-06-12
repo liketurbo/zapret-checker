@@ -41,7 +41,7 @@ def test_instagram_access():
     ping_success = _check_ping("instagram.com")
     if not ping_success:
         logger.warning("instagram ping failed")
-    curl_success = _check_curl("https://instagram.com")
+    curl_success = _check_curl("https://www.instagram.com")
     if not curl_success:
         logger.warning("instagram curl failed")
     return ping_success and curl_success
