@@ -22,11 +22,11 @@ def _check_curl(url):
         return False
 
 
-def check_yandex_access():
+def test_yandex_access():
     return _check_ping("yandex.ru") and _check_curl("https://yandex.ru")
 
 
-def check_youtube_access():
+def test_youtube_access():
     YOUTUBE_RICKROLL = "https://youtube.com/watch?v=dQw4w9WgXcQ"
     ping_success = _check_ping("youtube.com")
     if not ping_success:
@@ -37,7 +37,7 @@ def check_youtube_access():
     return ping_success and curl_success
 
 
-def check_instagram_access():
+def test_instagram_access():
     ping_success = _check_ping("instagram.com")
     if not ping_success:
         logger.warning("instagram ping failed")

@@ -2,7 +2,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 
-def setup_logging(log_file_path=None):
+def setup_logging():
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
@@ -11,16 +11,11 @@ def setup_logging(log_file_path=None):
         datefmt='%d/%m/%y %H:%M'
     )
 
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-
-    if log_file_path:
-        file_handler = RotatingFileHandler(
-            log_file_path,
-            maxBytes=100*1024,  # 100KB
-            backupCount=1,
-            encoding='utf8'
-        )
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+    file_handler = RotatingFileHandler(
+        './logs.txt',
+        maxBytes=10*1024,  # 10KB
+        backupCount=0,
+        encoding='utf8'
+    )
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
