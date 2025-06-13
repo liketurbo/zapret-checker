@@ -7,9 +7,18 @@ from log import setup_logging
 import sys
 import termios
 import tty
+import signal
+from typing import List, Optional, Tuple
+
+test_actions = [
+    ("Test Yandex access", test_yandex_access),
+    ("Test YouTube access", test_youtube_access),
+    ("Test Instagram access", test_instagram_access),
+]
+EXIT_KEY = 'q'
 
 
-def restart_zapret():
+def restart_zapret() -> bool:
     try:
         subprocess.run(
             ["/etc/init.d/zapret", "restart"],
@@ -22,139 +31,113 @@ def restart_zapret():
         return False
 
 
-def get_key():
+def get_key() -> str:
     fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
+    old_attrs = termios.tcgetattr(fd)
     try:
-        tty.setraw(sys.stdin.fileno())
+        tty.setraw(fd)
         ch = sys.stdin.read(1)
     finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_attrs)
     return ch
 
 
-def clear_screen():
+def clear_screen() -> None:
     print("\033c", end='')
 
 
-def hide_cursor():
+def hide_cursor() -> None:
     print("\033[?25l", end='')
 
 
-def show_cursor():
+def show_cursor() -> None:
     print("\033[?25h", end='')
 
 
-def display_menu(options, current_idx, current_config_name, status_msg):
+def display_menu(
+    configs: List[str],
+    selected: int,
+    current: Optional[str],
+    status: Tuple[Optional[str], str],
+) -> None:
     clear_screen()
     hide_cursor()
-    print("zapret configuration manager\n")
+    print("Zapret Configuration Manager\n")
 
-    test_options = [
-        "test yandex access",
-        "test youtube access",
-        "test instagram access",
-    ]
+    for idx, (label, _) in enumerate(test_actions):
+        prefix = "> " if idx == selected else "  "
+        print(f"{prefix}{label}")
 
-    for idx, option in enumerate(test_options):
-        prefix = '  '
-        if idx == current_idx and current_idx < len(test_options):
-            prefix = '> '
-        print(f"{prefix}{option}")
+    print('\n  Select configuration:')
+    base_idx = len(test_actions)
+    for idx, name in enumerate(configs):
+        menu_idx = base_idx + idx
+        prefix = "> " if menu_idx == selected else "  "
+        active = " *" if name == current else ""
+        print(f"{prefix}{name}{active}")
 
-    print('\n  select configuration:')
+    msg, mtype = status
+    if msg:
+        label = {'loading': '[...]', 'error': '[!]',
+                 'success': '[✓]'}.get(mtype, '')
+        print(f"\n{label} {msg}")
 
-    config_start_idx = len(test_options)
-    for idx, option in enumerate(options):
-        display_idx = config_start_idx + idx
-        prefix = '  '
-        if display_idx == current_idx:
-            prefix = '> '
-        postfix = ''
-        if current_config_name == option:
-            postfix = ' *'
-        print(f"{prefix}{option}{postfix}")
+    print(f"\nUse ↑/↓ to navigate, Enter to select, '{EXIT_KEY}' to quit")
 
-    if status_msg[0]:
-        status_text, status_type = status_msg
-        status_prefix = {
-            'loading': '[loading]',
-            'error': '[error]',
-            'success': '[success]'
-        }.get(status_type)
-        print(f"\n{status_prefix} {status_text}")
 
-    print("\nUse ↑/↓ arrows, Enter to select, 'q' to quit")
+def cleanup_and_exit(signum=None, frame=None) -> None:
+    show_cursor()
+    sys.exit(0)
 
 
 def main():
-    try:
-        setup_logging()
+    signal.signal(signal.SIGINT, cleanup_and_exit)
+    signal.signal(signal.SIGTERM, cleanup_and_exit)
 
-        all_configs = get_configs()
+    setup_logging()
+    configs_map = get_configs()
+    configs = sorted(configs_map)
 
-        config_keys = list(all_configs.keys())
-        config_keys.sort()
+    current_cfg: Optional[str] = None
+    selection = 0
+    status: Tuple[Optional[str], str] = (None, 'success')
+    total = len(test_actions) + len(configs)
 
-        current_config_name = None
-        current_idx = 0
-        status_msg = (None, 'success')
+    while True:
+        display_menu(configs, selection, current_cfg, status)
+        key = get_key()
 
-        total_options = 3 + len(config_keys)
+        if key == '\x1b':  # arrow keys prefix
+            _next1 = get_key()
+            next2 = get_key()
+            if next2 == 'A':  # up arrow
+                selection = max(0, selection - 1)
+            elif next2 == 'B':  # down arrow
+                selection = min(total - 1, selection + 1)
+        elif key == '\r':  # Enter
+            if selection < len(test_actions):
+                label, action = test_actions[selection]
+                status = (f"{label}...", 'loading')
+                display_menu(configs, selection, current_cfg, status)
+                ok = action()
+                status = (f"{label} {'succeeded' if ok else 'failed'}",
+                          'success' if ok else 'error')
+            else:
+                idx = selection - len(test_actions)
+                name = configs[idx]
+                current_cfg = name
+                status = (f"Applying {name}...", 'loading')
+                display_menu(configs, selection, current_cfg, status)
+                update_config(configs_map[name])
+                status = (f"Restarting zapret...", 'loading')
+                display_menu(configs, selection, current_cfg, status)
+                ok = restart_zapret()
+                status = ("Restart completed" if ok else "Restart failed",
+                          'success' if ok else 'error')
+        elif key.lower() == EXIT_KEY:
+            break
 
-        while True:
-            display_menu(config_keys, current_idx,
-                         current_config_name, status_msg)
-            key = get_key()
-
-            if key == '\x1b':
-                next_key = get_key()
-                if next_key == '[':
-                    arrow = get_key()
-                    if arrow == 'A':  # up arrow
-                        current_idx = max(0, current_idx - 1)
-                    elif arrow == 'B':  # down arrow
-                        current_idx = min(total_options - 1, current_idx + 1)
-            elif key == '\r':
-                if current_idx == 0:
-                    status_msg = ('testing yandex access...', 'loading')
-                    display_menu(config_keys, current_idx,
-                                 current_config_name, status_msg)
-                    success = test_yandex_access()
-                    status_msg = ('yandex test completed',
-                                  'success' if success else 'error')
-                elif current_idx == 1:
-                    status_msg = ('testing youtube access...', 'loading')
-                    display_menu(config_keys, current_idx,
-                                 current_config_name, status_msg)
-                    success = test_youtube_access()
-                    status_msg = ('youtube test completed',
-                                  'success' if success else 'error')
-                elif current_idx == 2:
-                    status_msg = ('testing instagram access...', 'loading')
-                    display_menu(config_keys, current_idx,
-                                 current_config_name, status_msg)
-                    success = test_instagram_access()
-                    status_msg = ('instagram test completed',
-                                  'success' if success else 'error')
-                elif current_idx >= 3:
-                    config_name = config_keys[current_idx - 3]
-                    current_config_name = config_name
-                    config = all_configs[config_name]
-                    status_msg = ('setting config...', 'loading')
-                    display_menu(config_keys, current_idx,
-                                 current_config_name, status_msg)
-                    update_config(config)
-                    status_msg = ('restarting zapret...', 'loading')
-                    display_menu(config_keys, current_idx,
-                                 current_config_name, status_msg)
-                    success = restart_zapret()
-                    status_msg = ('zapret restart completed',
-                                  'success' if success else 'error')
-            elif key.lower() == 'q':
-                return
-    finally:
-        show_cursor()
+    cleanup_and_exit()
 
 
 if __name__ == "__main__":
